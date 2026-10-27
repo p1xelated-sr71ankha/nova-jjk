@@ -1,51 +1,21 @@
-================================================================================
-NOVA — Jujutsu Kaisen: Video-Driven Domain Expansion Engine
-================================================================================
+NOVA — JUJUTSU KAISEN DOMAIN ENGINE
+===================================
 
-QUICK START (3 SECONDS):
---------------------------------------------------------------------------------
-WINDOWS:
-  Just double-click "start.bat"!
-  It will automatically start the server and open your browser to http://localhost:8000
+1. RUN:
+   Double-click "start.bat" (Windows) or run:
+   python -m http.server 8000
 
-MAC / LINUX:
-  Double-click or run "./start.sh" in terminal!
+2. OPEN:
+   http://localhost:8000 in your browser.
 
-MANUAL LAUNCH (ANY OS):
-  1. Open a terminal in this folder
-  2. Run: python -m http.server 8000
-  3. Open your browser to: http://localhost:8000
-
---------------------------------------------------------------------------------
-HOW TO USE:
---------------------------------------------------------------------------------
-1. Allow camera access when prompted (all video processing stays 100% on your device).
-2. Form canonical Jujutsu Kaisen hand signs in front of your camera:
-   - Satoru Gojo: Taishakuten / Indra Mudra (Cross middle finger over index finger) -> Infinite Void
-   - Ryomen Sukuna: Enma-ten Mudra (Clasp both hands, index tips touching pointing up) -> Malevolent Shrine
-   - Megumi Fushiguro: Shadow Puppet Mudra (Hook thumbs together, spread fingers like wings) -> Chimera Shadow Garden
-   - Aoi Todo: Clap both hands together rapidly -> Boogie Woogie
-3. To dismiss any domain and return to normal: Press [SPACE]
-
-KEYBOARD SHORTCUTS (NO CAMERA NEEDED):
-   [1] : Infinite Void (Satoru Gojo)
-   [2] : Malevolent Shrine (Ryomen Sukuna)
-   [3] : Chimera Shadow Garden (Megumi Fushiguro)
-   [4] : Self-Embodiment of Perfection (Mahito)
-   [SPACE] : Dismiss Domain / Return to Staging Area
-   [Q] : Limitless: Infinity Shield
-   [W] : Lapse: Blue (Singularity)
-   [E] : Reversal: Red (Repulsion)
-   [R] : Hollow Technique: Purple
-   [A] : Dismantle / Cleave Slices
-   [S] : Furnace: Fire Arrow
-   [D] : Boogie Woogie Clap
-   [M] : Toggle Sound On/Off
-
-CUSTOM VIDEOS:
-  Open the "Technique Manual & Video Customizer" drawer inside the app.
-  Click "Select Local MP4" under any character to use your own favorite anime clips!
-  Or place MP4 files directly into the "assets/videos/" folder.
-
-Enjoy the Domain Expansion!
-================================================================================
+3. CONTROLS:
+   [1] Infinite Void
+   [2] Malevolent Shrine
+   [3] Chimera Shadow Garden
+   [4] Self-Embodiment of Perfection
+   [R] Hollow Purple
+   [S] Furnace: Fire Arrow
+   [D] Boogie Woogie Clap
+   [G] Toggle Ghost Guide
+   [M] Toggle Audio
+   [Space] Dismiss Domain

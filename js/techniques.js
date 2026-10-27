@@ -1,14 +1,14 @@
 /**
- * NOVA — Jujutsu Kaisen Signature Moves & Cursed Techniques (Video Enhanced)
+ * Jujutsu Kaisen Signature Moves & Cursed Techniques
  *
- * Implements real-time abilities with video triggers:
- * - Gojo Satoru: Infinity Barrier, Lapse: Blue, Reversal: Red, Hollow Purple
- * - Ryomen Sukuna: Dismantle & Cleave (Screen Cutting), Furnace: Fire Arrow
- * - Aoi Todo: Boogie Woogie (Clap Transposition Video & Sound)
+ * Implements canonical abilities:
+ * - Gojo Satoru: Limitless Infinity Barrier, Lapse: Blue, Reversal: Red, Hollow Purple
+ * - Ryomen Sukuna: Dismantle & Cleave Slices, Furnace: Fire Arrow (Fūga)
+ * - Aoi Todo: Boogie Woogie Clap (Instantaneous Spatial Transposition)
  */
 
 import { soundEngine } from './audio-synthesizer.js';
-import { dist, clamp } from './math-utils.js';
+import { TechniquesFX } from './vfx/techniques-fx.js';
 
 export class TechniqueEngine {
   /**
@@ -16,13 +16,8 @@ export class TechniqueEngine {
    */
   constructor(videoEngine = null) {
     this.videoEngine = videoEngine;
-
-    // Active visual technique overlays
-    this.slashes = [];
-    this.purpleSphere = null;
-    this.fireArrow = null;
-    this.infinityAura = null;
-    this.boogieFlash = 0;
+    this.fx = new TechniquesFX();
+    this.slashes = []; // Sukuna instant slashes
   }
 
   /**
@@ -31,7 +26,7 @@ export class TechniqueEngine {
    * @param {number} hy Screen Y
    */
   activateInfinity(hx, hy) {
-    this.infinityAura = { x: hx, y: hy, radius: 180, life: 1.0 };
+    this.fx.activateInfinity(hx, hy);
     soundEngine.playInfinityShield();
   }
 
@@ -41,8 +36,9 @@ export class TechniqueEngine {
    * @param {number} hy
    */
   executeBlue(hx, hy) {
-    soundEngine.setCursedHum(0.8);
-    setTimeout(() => soundEngine.setCursedHum(0), 400);
+    this.fx.triggerBlue(hx, hy);
+    soundEngine.setCursedHum(0.9);
+    setTimeout(() => soundEngine.setCursedHum(0), 450);
   }
 
   /**
@@ -51,26 +47,16 @@ export class TechniqueEngine {
    * @param {number} hy
    */
   executeRed(hx, hy) {
+    this.fx.triggerRed(hx, hy);
     soundEngine.playDomainShatter();
   }
 
   /**
    * Fires Gojo's Hollow Technique: Purple.
-   * Plays the anime clip and renders the spatial erasure projectile.
+   * Collides Blue and Red into violet spatial erasure projectile.
    */
-  fireHollowPurple() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-
-    this.purpleSphere = {
-      x: 0,
-      y: h / 2,
-      vx: 18,
-      vy: 0,
-      radius: 65,
-      active: true,
-    };
-
+  fireHollowPurple(startX = 120, startY = null) {
+    this.fx.firePurple(startX, startY);
     soundEngine.playHollowPurple();
 
     if (this.videoEngine) {
@@ -89,10 +75,10 @@ export class TechniqueEngine {
     const w = window.innerWidth;
     const h = window.innerHeight;
 
-    const startX = x1 ?? (w * 0.15);
-    const startY = y1 ?? (h * 0.25);
-    const endX = x2 ?? (w * 0.85);
-    const endY = y2 ?? (h * 0.75);
+    const startX = x1 ?? (w * 0.12);
+    const startY = y1 ?? (h * 0.22);
+    const endX = x2 ?? (w * 0.88);
+    const endY = y2 ?? (h * 0.78);
 
     this.slashes.push({
       x1: startX,
@@ -107,28 +93,20 @@ export class TechniqueEngine {
   }
 
   /**
-   * Executes Sukuna's Furnace Fire Arrow (「開」 - Fūga).
+   * Executes Sukuna's Furnace Fire Arrow (Fūga).
    */
-  executeFireArrow() {
-    this.fireArrow = {
-      x: window.innerWidth * 0.1,
-      y: window.innerHeight * 0.8,
-      targetX: window.innerWidth / 2,
-      targetY: window.innerHeight / 2,
-      progress: 0,
-      active: true,
-    };
-
+  executeFireArrow(cx = null, cy = null) {
+    this.fx.fireFurnaceArrow(cx, cy);
     soundEngine.playFireArrow();
   }
 
   /**
    * Executes Aoi Todo's Boogie Woogie (Clap Transposition).
-   * Triggers the anime clap clip, sound, and screen glitch flash!
+   * Triggers split-second monochrome flash, coordinate warp, and radiating manga speed lines!
    */
-  executeBoogieWoogie() {
+  executeBoogieWoogie(cx = null, cy = null) {
     soundEngine.playClap();
-    this.boogieFlash = 1.0;
+    this.fx.triggerBoogieWoogie(cx, cy);
 
     if (this.videoEngine) {
       this.videoEngine.playTechniqueVideo('boogie_woogie');
@@ -140,70 +118,33 @@ export class TechniqueEngine {
    * @param {number} dt Normalized time step
    */
   update(dt) {
-    // 1. Update Sukuna Slashes
+    this.fx.update(dt);
+
+    // Update instant slashes
     for (let i = this.slashes.length - 1; i >= 0; i--) {
       const s = this.slashes[i];
-      s.alpha -= 0.04 * dt;
+      s.alpha -= 0.045 * dt;
       if (s.alpha <= 0) {
         this.slashes.splice(i, 1);
-      }
-    }
-
-    // 2. Update Boogie Woogie screen flash
-    if (this.boogieFlash > 0) {
-      this.boogieFlash = Math.max(0, this.boogieFlash - 0.08 * dt);
-    }
-
-    // 3. Update Infinity Shield aura
-    if (this.infinityAura) {
-      this.infinityAura.life -= 0.03 * dt;
-      if (this.infinityAura.life <= 0) {
-        this.infinityAura = null;
-      }
-    }
-
-    // 4. Update Hollow Purple Projectile
-    if (this.purpleSphere && this.purpleSphere.active) {
-      const s = this.purpleSphere;
-      s.x += s.vx * dt;
-      s.y += s.vy * dt;
-
-      if (s.x > window.innerWidth + 100) {
-        this.purpleSphere = null;
-      }
-    }
-
-    // 5. Update Fire Arrow
-    if (this.fireArrow && this.fireArrow.active) {
-      const fa = this.fireArrow;
-      fa.progress += 0.035 * dt;
-
-      if (fa.progress >= 1.0) {
-        this.fireArrow = null;
       }
     }
   }
 
   /**
-   * Renders technique visuals onto transparent canvas overlay.
+   * Renders technique visuals onto canvas.
    * @param {CanvasRenderingContext2D} ctx
    */
   draw(ctx) {
-    // 1. Boogie Woogie Glitch Flash
-    if (this.boogieFlash > 0) {
-      ctx.save();
-      ctx.fillStyle = `rgba(255, 255, 255, ${this.boogieFlash * 0.4})`;
-      ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
-      ctx.restore();
-    }
+    // 1. Draw FX module
+    this.fx.draw(ctx);
 
-    // 2. Sukuna Slashes (Crimson cutting lines across video)
+    // 2. Sukuna Instant Slashes
     if (this.slashes.length > 0) {
       ctx.save();
       for (const s of this.slashes) {
         ctx.strokeStyle = `rgba(239, 68, 68, ${s.alpha})`;
-        ctx.lineWidth = 4;
-        ctx.shadowBlur = 16;
+        ctx.lineWidth = 4.5;
+        ctx.shadowBlur = 20;
         ctx.shadowColor = '#ef4444';
 
         ctx.beginPath();
@@ -211,77 +152,13 @@ export class TechniqueEngine {
         ctx.lineTo(s.x2, s.y2);
         ctx.stroke();
 
-        ctx.strokeStyle = `rgba(255, 255, 255, ${s.alpha * 0.9})`;
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = `rgba(255, 255, 255, ${s.alpha * 0.95})`;
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
         ctx.moveTo(s.x1, s.y1);
         ctx.lineTo(s.x2, s.y2);
         ctx.stroke();
       }
-      ctx.restore();
-    }
-
-    // 3. Gojo's Infinity Shield Barrier
-    if (this.infinityAura) {
-      ctx.save();
-      const a = this.infinityAura;
-      ctx.strokeStyle = `rgba(56, 189, 248, ${a.life * 0.7})`;
-      ctx.lineWidth = 2.5;
-      ctx.shadowBlur = 18;
-      ctx.shadowColor = '#38bdf8';
-
-      ctx.beginPath();
-      ctx.arc(a.x, a.y, a.radius, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // 4. Gojo's Hollow Technique: Purple Projectile
-    if (this.purpleSphere && this.purpleSphere.active) {
-      const s = this.purpleSphere;
-      ctx.save();
-
-      const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.radius * 1.5);
-      grad.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
-      grad.addColorStop(0.35, 'rgba(192, 132, 252, 0.95)');
-      grad.addColorStop(0.7, 'rgba(147, 51, 234, 0.6)');
-      grad.addColorStop(1, 'rgba(147, 51, 234, 0)');
-
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(s.x, s.y, s.radius * 1.5, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Violet lightning crackles
-      ctx.strokeStyle = '#e9d5ff';
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 4; i++) {
-        const ang = Math.random() * Math.PI * 2;
-        const r1 = s.radius * 0.5;
-        const r2 = s.radius * 1.4;
-        ctx.beginPath();
-        ctx.moveTo(s.x + Math.cos(ang) * r1, s.y + Math.sin(ang) * r1);
-        ctx.lineTo(s.x + Math.cos(ang) * r2, s.y + Math.sin(ang) * r2);
-        ctx.stroke();
-      }
-
-      ctx.restore();
-    }
-
-    // 5. Sukuna's Fire Arrow
-    if (this.fireArrow && this.fireArrow.active) {
-      const fa = this.fireArrow;
-      const curX = fa.x + (fa.targetX - fa.x) * fa.progress;
-      const curY = fa.y + (fa.targetY - fa.y) * fa.progress;
-
-      ctx.save();
-      ctx.fillStyle = '#f59e0b';
-      ctx.shadowBlur = 24;
-      ctx.shadowColor = '#ef4444';
-
-      ctx.beginPath();
-      ctx.arc(curX, curY, 18, 0, Math.PI * 2);
-      ctx.fill();
       ctx.restore();
     }
   }

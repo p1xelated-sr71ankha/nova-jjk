@@ -1,10 +1,9 @@
 /**
- * NOVA — Jujutsu Kaisen Video-Driven Domain Expansion Engine
- * Master Controller & Composition Root
+ * Jujutsu Kaisen Domain Expansion Studio — Master Controller
  *
- * Coordinates full-screen anime domain video playback, dual-hand MediaPipe tracking,
- * canonical JJK Mudra recognition, procedural Web Audio synthesis,
- * interactive step-by-step pictorial tutorials, and keyboard hotkeys.
+ * Coordinates real-time anime visual simulations, MediaPipe dual-hand tracking,
+ * canonical hand sign recognition, procedural Web Audio, and keyboard shortcuts.
+ * 100% English interface with human-crafted studio layout.
  */
 
 import { CONFIG } from './config.js';
@@ -16,7 +15,7 @@ import { TechniqueEngine } from './techniques.js';
 import { TutorialUI } from './tutorial-ui.js';
 import { soundEngine } from './audio-synthesizer.js';
 
-// DOM Element References
+// DOM Elements
 const canvas = document.getElementById('nova-canvas');
 const video = document.getElementById('input-video');
 const domainVideo = document.getElementById('domain-video-player');
@@ -60,11 +59,11 @@ function handleDomainChange(domain) {
   if (domain) {
     domainBanner.classList.remove('hidden');
     domainBanner.classList.add('visible');
-    if (domainBannerTitle) domainBannerTitle.textContent = domain.kanji + ' • ' + domain.name;
+    if (domainBannerTitle) domainBannerTitle.textContent = domain.name.toUpperCase();
     if (domainBannerQuote) domainBannerQuote.textContent = domain.quote;
     if (domainBannerUser) domainBannerUser.textContent = domain.title;
 
-    statusText.textContent = `DOMAIN EXPANSION: ${domain.name} ACTIVE`;
+    statusText.textContent = `DOMAIN EXPANSION: ${domain.name.toUpperCase()} ACTIVE`;
     statusText.style.color = domain.accentColor;
   } else {
     domainBanner.classList.remove('visible');
@@ -80,10 +79,10 @@ const domainEngine = new DomainEngine(videoEngine, handleDomainChange);
 // 3. Initialize Technique Engine
 const techniqueEngine = new TechniqueEngine(videoEngine);
 
-// 4. Initialize Transparent VFX Overlay Renderer
+// 4. Initialize VFX Overlay Renderer
 const renderer = new Renderer(canvas, domainEngine, techniqueEngine);
 
-// 5. Initialize Tutorial UI with Video Customizer
+// 5. Initialize Tutorial UI
 const tutorialUI = new TutorialUI(domainEngine, techniqueEngine, videoEngine);
 
 // 6. Audio Toggle
@@ -91,7 +90,7 @@ if (audioToggleBtn) {
   audioToggleBtn.addEventListener('click', () => {
     const isMuted = soundEngine.toggleMute();
     audioToggleBtn.classList.toggle('muted', isMuted);
-    audioToggleBtn.title = isMuted ? 'Unmute Audio' : 'Mute Audio';
+    audioToggleBtn.title = isMuted ? 'Unmute Sound' : 'Mute Sound';
   });
 }
 
@@ -104,7 +103,7 @@ function handleCameraError(err) {
     cameraFallback.classList.remove('hidden');
   }
   if (statusText) {
-    statusText.textContent = 'Camera blocked. Use Tutorial Drawer or Hotkeys [1-4, Q-R, A-D].';
+    statusText.textContent = 'Camera unavailable. Use Manual Drawer or Hotkeys [1-6, Q-R, A-D].';
     statusText.style.color = '#f87171';
   }
 }
@@ -116,46 +115,49 @@ tracker = new HandTracker(
     tutorialUI.updatePostureFeedback(state.jjk);
 
     if (!state.active) {
-      statusText.textContent = 'Show hand signs or open Tutorial Manual';
+      statusText.textContent = 'Hold hand signs in front of camera or open Manual';
       statusText.style.color = '#94a3b8';
       if (statusIndicator) {
         statusIndicator.style.backgroundColor = '#64748b';
         statusIndicator.style.boxShadow = 'none';
       }
       if (previewStatusPill) {
-        previewStatusPill.innerHTML = '<span class="status-dot idle"></span>Searching hands...';
+        previewStatusPill.innerHTML = '<span class="status-dot idle"></span>Searching for hands...';
         previewStatusPill.classList.remove('active');
       }
       return;
     }
 
     if (previewStatusPill) {
-      previewStatusPill.innerHTML = `<span class="status-dot active"></span>${state.handsCount} Hand${state.handsCount > 1 ? 's' : ''} Tracked`;
+      previewStatusPill.innerHTML = `<span class="status-dot active"></span>${state.handsCount} Hand${state.handsCount > 1 ? 's' : ''} Detected`;
       previewStatusPill.classList.add('active');
     }
 
     if (state.jjk.detectedDomain) {
       const domName = state.jjk.detectedDomain.replace(/_/g, ' ').toUpperCase();
-      statusText.textContent = `Channeling Mudra: ${domName} (${Math.round(state.jjk.confidence * 100)}%)`;
+      statusText.textContent = `Channeling Sign: ${domName} (${Math.round(state.jjk.confidence * 100)}% Match)`;
       statusText.style.color = '#f59e0b';
       if (statusIndicator) {
         statusIndicator.style.backgroundColor = '#f59e0b';
-        statusIndicator.style.boxShadow = '0 0 12px #f59e0b';
+        statusIndicator.style.boxShadow = '0 0 10px #f59e0b';
       }
     } else if (state.mode === 'pinch') {
-      statusText.textContent = 'PINCH — Cursed Condensation';
+      statusText.textContent = 'Pinch Detected — Cursed Energy Condensation';
       statusText.style.color = '#fb7185';
     } else if (state.mode === 'open') {
-      statusText.textContent = 'OPEN PALM — Cursed Shockwave';
-      statusText.style.color = '#34d399';
+      statusText.textContent = 'Open Palm Detected — Limitless Infinity Field';
+      statusText.style.color = '#38bdf8';
     } else {
-      statusText.textContent = 'Hand tracked — Form a canonical JJK Mudra';
+      statusText.textContent = 'Hands tracked — Align with the Ghost Guide to trigger';
       statusText.style.color = '#7dd3fc';
     }
   },
   skeletonCanvas,
   handleCameraError
 );
+
+// Connect tracker to tutorial UI
+tutorialUI.setHandTracker(tracker);
 
 video.addEventListener('loadedmetadata', () => {
   syncPreviewCanvasSize();
@@ -189,6 +191,12 @@ window.addEventListener('keydown', (e) => {
     case '4':
       domainEngine.activateDomain('self_embodiment_of_perfection');
       break;
+    case '5':
+      domainEngine.activateDomain('idle_death_gamble');
+      break;
+    case '6':
+      domainEngine.activateDomain('authentic_mutual_love');
+      break;
     case ' ':
       domainEngine.dismissDomain();
       break;
@@ -220,6 +228,14 @@ window.addEventListener('keydown', (e) => {
       techniqueEngine.executeBoogieWoogie();
       break;
 
+    // Ghost Guide Toggle
+    case 'G':
+      if (tracker) {
+        const en = tracker.toggleGhostGuide();
+        statusText.textContent = `Ghost Alignment Guide: ${en ? 'ENABLED' : 'DISABLED'}`;
+      }
+      break;
+
     // Audio Toggle
     case 'M':
       if (audioToggleBtn) audioToggleBtn.click();
@@ -249,22 +265,14 @@ function animate(currentTime) {
     domainEngine.decayEnergy(dt);
   }
 
-  // Handle dynamic gesture triggers
-  if (tracker && tracker.state.active) {
-    if (tracker.state.jjk.isClap) {
-      techniqueEngine.executeBoogieWoogie();
-      tracker.state.jjk.isClap = false;
-    }
-  }
-
-  // Update Cursed Energy HUD
+  // Update cursed energy bar UI
   if (cursedEnergyBar && cursedEnergyVal) {
-    const energyPct = Math.min(100, Math.round((domainEngine.cursedEnergy / CONFIG.CURSED_ENERGY.MAX) * 100));
-    cursedEnergyBar.style.width = `${energyPct}%`;
-    cursedEnergyVal.textContent = `${energyPct}%`;
+    const pct = Math.round(domainEngine.cursedEnergy);
+    cursedEnergyBar.style.width = `${pct}%`;
+    cursedEnergyVal.textContent = `${pct}%`;
   }
 
-  // Render Transparent VFX Overlay
+  // Render visual effects composite frame
   renderer.draw(dt);
 
   requestAnimationFrame(animate);
@@ -272,13 +280,12 @@ function animate(currentTime) {
 
 requestAnimationFrame(animate);
 
-// Debug Handle
+// Export global instance for UI button binding
 window.__NOVA__ = {
-  config: CONFIG,
-  videoEngine,
   domainEngine,
   techniqueEngine,
-  renderer,
+  videoEngine,
   soundEngine,
+  tutorialUI,
   tracker,
 };

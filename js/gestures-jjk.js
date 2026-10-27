@@ -1,13 +1,15 @@
 /**
- * NOVA — Jujutsu Kaisen Hand Seal (Mudra) & Gesture Classifier
+ * Jujutsu Kaisen Hand Seal (Mudra) & Gesture Classifier
+ * Real-time MediaPipe 21-Landmark Computer Vision Heuristics
  *
- * Implements real-time computer-vision heuristics on MediaPipe 21-landmark data:
- * - Gojo's Indra Mudra (Taishakuten) for Infinite Void
- * - Sukuna's Enma-ten Shrine Mudra for Malevolent Shrine
- * - Megumi's Shadow Puppet Mudra for Chimera Shadow Garden
- * - Mahito's Soul Web Clasp for Self-Embodiment of Perfection
- * - Todo's Boogie Woogie Clap (velocity-based transient)
- * - Gojo's Infinity Palm & Sukuna's Dismantle Knife-Hand
+ * Evaluates canonical hand seals:
+ * - Gojo Satoru: Taishakuten / Indra Mudra (Infinite Void)
+ * - Ryomen Sukuna: Enma-ten Mudra (Malevolent Shrine)
+ * - Megumi Fushiguro: Shadow Puppet Mudra (Chimera Shadow Garden)
+ * - Mahito: Lotus Soul Clasp (Self-Embodiment of Perfection)
+ * - Aoi Todo: Percussive Clap (Boogie Woogie)
+ * - Kinji Hakari: Pachinko Gambler Clasp (Idle Death Gamble)
+ * - Yuta Okkotsu: Rika Ring Seal (Authentic Mutual Love)
  */
 
 import { dist, clamp } from './math-utils.js';
@@ -30,7 +32,7 @@ export class JJKGestureClassifier {
 
     const dWristPip = Math.hypot(pip.x - wrist.x, pip.y - wrist.y);
     const dWristTip = Math.hypot(tip.x - wrist.x, tip.y - wrist.y);
-    return dWristTip > dWristPip * 1.22;
+    return dWristTip > dWristPip * 1.18;
   }
 
   /**
@@ -43,7 +45,7 @@ export class JJKGestureClassifier {
 
     const dWristPip = Math.hypot(pip.x - wrist.x, pip.y - wrist.y);
     const dWristTip = Math.hypot(tip.x - wrist.x, tip.y - wrist.y);
-    return dWristTip < dWristPip * 1.05;
+    return dWristTip < dWristPip * 1.08;
   }
 
   /**
@@ -63,6 +65,8 @@ export class JJKGestureClassifier {
         malevolent_shrine: 0,
         chimera_shadow_garden: 0,
         self_embodiment: 0,
+        idle_death_gamble: 0,
+        authentic_mutual_love: 0,
       },
       isClap: false,
       isInfinity: false,
@@ -79,7 +83,7 @@ export class JJKGestureClassifier {
     const hand2 = hasHand2 ? multiHandLandmarks[1] : null;
 
     // ========================================================
-    // 1. GOJO SATORU — INFINITE VOID (INDRA MUDRA)
+    // 1. SATORU GOJO — INFINITE VOID (TAISHAKUTEN / INDRA MUDRA)
     // Single-hand pose: Index & Middle extended & crossed, Ring & Pinky curled
     // ========================================================
     for (const h of multiHandLandmarks) {
@@ -98,33 +102,22 @@ export class JJKGestureClassifier {
       if (indexExt) gojoScore += 0.25;
       if (middleExt) gojoScore += 0.25;
       if (ringCurled) gojoScore += 0.2;
-      if (pinkyCurled) gojoScore += 0.2;
-      if (tipCrossDist < 48) gojoScore += 0.25;
+      if (pinkyCurled) gojoScore += 0.15;
+      if (tipCrossDist < 55) gojoScore += 0.25; // Fingers crossing or touching
 
       const finalGojo = clamp(gojoScore, 0, 1.0);
       if (finalGojo > result.mudraScores.infinite_void) {
         result.mudraScores.infinite_void = finalGojo;
       }
-    }
 
-    // ========================================================
-    // 2. GOJO SATORU — INFINITY (OPEN PALM SHIELD)
-    // All fingers extended, upright facing camera
-    // ========================================================
-    for (const h of multiHandLandmarks) {
-      const idxExt = this.isExtended(h, 6, 8);
-      const midExt = this.isExtended(h, 10, 12);
-      const rngExt = this.isExtended(h, 14, 16);
-      const pnkExt = this.isExtended(h, 18, 20);
-
-      if (idxExt && midExt && rngExt && pnkExt) {
+      // Check Open Palm (Infinity Shield)
+      if (indexExt && middleExt && this.isExtended(h, 14, 16) && this.isExtended(h, 18, 20)) {
         result.isInfinity = true;
       }
     }
 
     // ========================================================
-    // 3. SUKUNA — DISMANTLE (SWIPING KNIFE-HAND)
-    // Flat hand moving fast laterally
+    // 2. SUKUNA — DISMANTLE (SWIPING KNIFE-HAND)
     // ========================================================
     const curX = hand1[8].x * width;
     if (this.prevHandX !== null) {
@@ -161,36 +154,56 @@ export class JJKGestureClassifier {
       );
 
       // --- A. SUKUNA — MALEVOLENT SHRINE (ENMA-TEN TEMPLE SEAL) ---
-      // Index fingertips touching pointing up, pinkies touching at base, wrists close
+      // Index fingertips touching pointing up (roof), pinkies close at base, wrists close
       let sukunaScore = 0;
-      if (wristDist < 240) sukunaScore += 0.25;
-      if (indexTipDist < 55) sukunaScore += 0.35;
-      if (pinkyTipDist < 120) sukunaScore += 0.25;
-      if (thumbTipDist < 90) sukunaScore += 0.15;
+      if (wristDist < 260) sukunaScore += 0.25;
+      if (indexTipDist < 60) sukunaScore += 0.35;
+      if (pinkyTipDist < 130) sukunaScore += 0.25;
+      if (thumbTipDist < 100) sukunaScore += 0.15;
       result.mudraScores.malevolent_shrine = clamp(sukunaScore, 0, 1.0);
 
       // --- B. MEGUMI — CHIMERA SHADOW GARDEN (SHADOW PUPPET WINGS) ---
-      // Thumbs hooked together, fingers spread outward
+      // Thumbs hooked together, fingers spread outward like bird wings
       let megumiScore = 0;
-      if (thumbTipDist < 48) megumiScore += 0.4;
+      if (thumbTipDist < 52) megumiScore += 0.4;
       if (this.isExtended(hand1, 6, 8) && this.isExtended(hand2, 6, 8)) megumiScore += 0.3;
-      if (indexTipDist > 80) megumiScore += 0.3;
+      if (indexTipDist > 75) megumiScore += 0.3;
       result.mudraScores.chimera_shadow_garden = clamp(megumiScore, 0, 1.0);
 
-      // --- C. MAHITO — SELF-EMBODIMENT OF PERFECTION ---
-      // Cupped palms with fingers curving into a cage
+      // --- C. MAHITO — SELF-EMBODIMENT OF PERFECTION (SOUL CLASP) ---
+      // Cupped palms with fingers curving inward like a lotus cage
       let mahitoScore = 0;
-      if (wristDist < 140) mahitoScore += 0.3;
-      if (indexTipDist < 75 && pinkyTipDist < 75) mahitoScore += 0.4;
+      if (wristDist < 160) mahitoScore += 0.3;
+      if (indexTipDist < 85 && pinkyTipDist < 85) mahitoScore += 0.4;
       if (!this.isExtended(hand1, 6, 8) && !this.isExtended(hand2, 6, 8)) mahitoScore += 0.3;
       result.mudraScores.self_embodiment = clamp(mahitoScore, 0, 1.0);
 
-      // --- D. TODO — BOOGIE WOOGIE (HAND CLAP) ---
+      // --- D. HAKARI — IDLE DEATH GAMBLE (GAMBLER'S PRAYER CLASP) ---
+      // Both palms joined flat together, all fingers aligned upright
+      let hakariScore = 0;
+      if (wristDist < 100) hakariScore += 0.3;
+      if (indexTipDist < 40) hakariScore += 0.35;
+      if (pinkyTipDist < 50) hakariScore += 0.35;
+      result.mudraScores.idle_death_gamble = clamp(hakariScore, 0, 1.0);
+
+      // --- E. YUTA — AUTHENTIC MUTUAL LOVE (RIKA RING PRAYER) ---
+      // Left and right hands intertwined, ring fingers touching
+      const ringDist = dist(
+        hand1[16].x * width, hand1[16].y * height,
+        hand2[16].x * width, hand2[16].y * height
+      );
+      let yutaScore = 0;
+      if (wristDist < 120) yutaScore += 0.35;
+      if (ringDist < 45) yutaScore += 0.45;
+      if (indexTipDist < 70) yutaScore += 0.2;
+      result.mudraScores.authentic_mutual_love = clamp(yutaScore, 0, 1.0);
+
+      // --- F. TODO — BOOGIE WOOGIE (HAND CLAP) ---
       const now = performance.now();
       if (this.prevWristDist !== null) {
         const delta = this.prevWristDist - wristDist;
         // Rapid closure of palms into close contact
-        if (delta > 60 && wristDist < 90 && now - this.lastClapTime > 800) {
+        if (delta > 55 && wristDist < 95 && now - this.lastClapTime > 750) {
           result.isClap = true;
           this.lastClapTime = now;
         }
@@ -205,7 +218,7 @@ export class JJKGestureClassifier {
     let maxScore = 0;
 
     for (const [key, score] of Object.entries(result.mudraScores)) {
-      if (score > maxScore && score >= 0.72) {
+      if (score > maxScore && score >= 0.70) {
         maxScore = score;
         maxDomain = key;
       }

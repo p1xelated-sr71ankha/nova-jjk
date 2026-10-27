@@ -1,6 +1,5 @@
 /**
- * NOVA — Hand-Controlled Particle Galaxy
- * Mathematical Utility Functions
+ * Jujutsu Kaisen Domain Engine — Mathematical Utility Functions
  *
  * Pure, side-effect-free helpers for vector math, coordinate transformations,
  * logarithmic spiral calculations, and color space conversions.

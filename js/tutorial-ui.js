@@ -1,16 +1,9 @@
 /**
- * NOVA — Jujutsu Kaisen Pictorial Tutorial & Video Customizer Drawer
+ * Jujutsu Kaisen Hand Sign (Mudra) Manual & Technique Studio
  *
- * Implements simplified on-screen pictorial guides with handcrafted SVG
- * vector hand illustrations for each canonical anime hand sign:
- * - Gojo's Indra Mudra (Infinite Void)
- * - Sukuna's Enma-ten Shrine Mudra (Malevolent Shrine)
- * - Megumi's Shadow Puppet Mudra (Chimera Shadow Garden)
- * - Todo's Boogie Woogie Clap
- *
- * Features 3-step interactive controls (Posture -> Chant -> Expand),
- * 1-click execution for all signature moves, and a Video Customizer
- * allowing users to select their own local MP4 clips or paste custom URLs!
+ * Provides handcrafted anatomical hand sign diagrams, step-by-step
+ * finger placement tutorials, technique breakdowns, and real-time
+ * camera alignment guides in 100% English.
  */
 
 export class TutorialUI {
@@ -18,11 +11,13 @@ export class TutorialUI {
    * @param {import('./domain-engine.js').DomainEngine} domainEngine
    * @param {import('./techniques.js').TechniqueEngine} techniqueEngine
    * @param {import('./video-engine.js').VideoEngine} videoEngine
+   * @param {import('./hand-tracker.js').HandTracker} [handTracker]
    */
-  constructor(domainEngine, techniqueEngine, videoEngine) {
+  constructor(domainEngine, techniqueEngine, videoEngine, handTracker = null) {
     this.domainEngine = domainEngine;
     this.techniqueEngine = techniqueEngine;
     this.videoEngine = videoEngine;
+    this.handTracker = handTracker;
 
     this.drawer = document.getElementById('tutorial-drawer');
     this.toggleBtn = document.getElementById('tutorial-toggle-btn');
@@ -32,8 +27,12 @@ export class TutorialUI {
     this.accuracyBar = document.getElementById('mudra-accuracy-bar');
     this.accuracyText = document.getElementById('mudra-accuracy-text');
 
-    this.activeCharacter = 'gojo'; // 'gojo' | 'sukuna' | 'megumi' | 'todo'
+    this.activeCharacter = 'gojo'; // 'gojo' | 'sukuna' | 'megumi' | 'mahito' | 'todo' | 'hakari' | 'yuta'
     this.init();
+  }
+
+  setHandTracker(tracker) {
+    this.handTracker = tracker;
   }
 
   init() {
@@ -62,18 +61,21 @@ export class TutorialUI {
     if (!this.tabContainer) return;
 
     const characters = [
-      { id: 'gojo', name: 'Gojo Satoru', kanji: '五条悟', color: '#38bdf8' },
-      { id: 'sukuna', name: 'Ryomen Sukuna', kanji: '両面宿儺', color: '#ef4444' },
-      { id: 'megumi', name: 'Megumi', kanji: '伏黒恵', color: '#10b981' },
-      { id: 'todo', name: 'Aoi Todo', kanji: '東堂葵', color: '#f59e0b' },
+      { id: 'gojo', name: 'Gojo', role: 'Infinite Void', color: '#38bdf8' },
+      { id: 'sukuna', name: 'Sukuna', role: 'Malevolent Shrine', color: '#ef4444' },
+      { id: 'megumi', name: 'Megumi', role: 'Shadow Garden', color: '#10b981' },
+      { id: 'mahito', name: 'Mahito', role: 'Self-Embodiment', color: '#ec4899' },
+      { id: 'todo', name: 'Todo', role: 'Boogie Woogie', color: '#f59e0b' },
+      { id: 'hakari', name: 'Hakari', role: 'Death Gamble', color: '#eab308' },
+      { id: 'yuta', name: 'Yuta', role: 'Mutual Love', color: '#8b5cf6' },
     ];
 
     this.tabContainer.innerHTML = characters
       .map(
         (c) => `
-        <button class="char-tab ${this.activeCharacter === c.id ? 'active' : ''}" data-char="${c.id}" style="--tab-color: ${c.color}">
-          <span class="tab-kanji">${c.kanji}</span>
-          <span class="tab-name">${c.name}</span>
+        <button class="char-tab ${this.activeCharacter === c.id ? 'active' : ''}" data-char="${c.id}" style="--tab-accent: ${c.color}">
+          <span class="tab-primary-name">${c.name}</span>
+          <span class="tab-sub-role">${c.role}</span>
         </button>
       `
       )
@@ -85,6 +87,20 @@ export class TutorialUI {
         this.activeCharacter = charId;
         this.renderTabs();
         this.renderContent();
+
+        // Update Ghost guide on webcam
+        const mudraMap = {
+          gojo: 'infinite_void',
+          sukuna: 'malevolent_shrine',
+          megumi: 'chimera_shadow_garden',
+          mahito: 'self_embodiment',
+          todo: 'boogie_woogie',
+          hakari: 'idle_death_gamble',
+          yuta: 'authentic_mutual_love',
+        };
+        if (this.handTracker && mudraMap[charId]) {
+          this.handTracker.setGhostGuide(mudraMap[charId]);
+        }
       });
     });
   }
@@ -92,14 +108,28 @@ export class TutorialUI {
   renderContent() {
     if (!this.contentContainer) return;
 
-    if (this.activeCharacter === 'gojo') {
-      this.contentContainer.innerHTML = this.getGojoContent();
-    } else if (this.activeCharacter === 'sukuna') {
-      this.contentContainer.innerHTML = this.getSukunaContent();
-    } else if (this.activeCharacter === 'megumi') {
-      this.contentContainer.innerHTML = this.getMegumiContent();
-    } else if (this.activeCharacter === 'todo') {
-      this.contentContainer.innerHTML = this.getTodoContent();
+    switch (this.activeCharacter) {
+      case 'gojo':
+        this.contentContainer.innerHTML = this.getGojoContent();
+        break;
+      case 'sukuna':
+        this.contentContainer.innerHTML = this.getSukunaContent();
+        break;
+      case 'megumi':
+        this.contentContainer.innerHTML = this.getMegumiContent();
+        break;
+      case 'mahito':
+        this.contentContainer.innerHTML = this.getMahitoContent();
+        break;
+      case 'todo':
+        this.contentContainer.innerHTML = this.getTodoContent();
+        break;
+      case 'hakari':
+        this.contentContainer.innerHTML = this.getHakariContent();
+        break;
+      case 'yuta':
+        this.contentContainer.innerHTML = this.getYutaContent();
+        break;
     }
 
     this.bindActionButtons();
@@ -123,6 +153,15 @@ export class TutorialUI {
       });
     }
 
+    const ghostBtn = this.contentContainer.querySelector('.btn-ghost-toggle');
+    if (ghostBtn && this.handTracker) {
+      ghostBtn.addEventListener('click', () => {
+        const enabled = this.handTracker.toggleGhostGuide();
+        ghostBtn.textContent = enabled ? 'Ghost Alignment Guide: ON' : 'Ghost Alignment Guide: OFF';
+        ghostBtn.classList.toggle('active', enabled);
+      });
+    }
+
     this.contentContainer.querySelectorAll('.btn-technique').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         const tech = e.currentTarget.getAttribute('data-tech');
@@ -132,11 +171,8 @@ export class TutorialUI {
   }
 
   bindVideoCustomizers() {
-    // Local File Picker
     const fileInput = this.contentContainer.querySelector('.video-file-input');
     const pickBtn = this.contentContainer.querySelector('.btn-pick-video');
-    const urlInput = this.contentContainer.querySelector('.video-url-input');
-    const setUrlBtn = this.contentContainer.querySelector('.btn-set-url');
     const statusLabel = this.contentContainer.querySelector('.custom-video-status');
 
     if (pickBtn && fileInput) {
@@ -147,22 +183,8 @@ export class TutorialUI {
           const targetKey = pickBtn.getAttribute('data-target-key');
           this.videoEngine.setCustomVideoSource(targetKey, file);
           if (statusLabel) {
-            statusLabel.textContent = `Custom Local Video: ${file.name}`;
+            statusLabel.textContent = `Custom Video Loaded: ${file.name}`;
             statusLabel.style.color = '#34d399';
-          }
-        }
-      });
-    }
-
-    if (setUrlBtn && urlInput) {
-      setUrlBtn.addEventListener('click', () => {
-        const url = urlInput.value.trim();
-        if (url) {
-          const targetKey = setUrlBtn.getAttribute('data-target-key');
-          this.videoEngine.setCustomVideoSource(targetKey, url);
-          if (statusLabel) {
-            statusLabel.textContent = `Custom URL Set`;
-            statusLabel.style.color = '#38bdf8';
           }
         }
       });
@@ -202,19 +224,18 @@ export class TutorialUI {
     if (!this.accuracyBar || !this.accuracyText) return;
 
     let targetScore = 0;
-    if (this.activeCharacter === 'gojo') {
-      targetScore = jjkClass.mudraScores.infinite_void || 0;
-    } else if (this.activeCharacter === 'sukuna') {
-      targetScore = jjkClass.mudraScores.malevolent_shrine || 0;
-    } else if (this.activeCharacter === 'megumi') {
-      targetScore = jjkClass.mudraScores.chimera_shadow_garden || 0;
-    }
+    if (this.activeCharacter === 'gojo') targetScore = jjkClass.mudraScores.infinite_void || 0;
+    else if (this.activeCharacter === 'sukuna') targetScore = jjkClass.mudraScores.malevolent_shrine || 0;
+    else if (this.activeCharacter === 'megumi') targetScore = jjkClass.mudraScores.chimera_shadow_garden || 0;
+    else if (this.activeCharacter === 'mahito') targetScore = jjkClass.mudraScores.self_embodiment || 0;
+    else if (this.activeCharacter === 'hakari') targetScore = jjkClass.mudraScores.idle_death_gamble || 0;
+    else if (this.activeCharacter === 'yuta') targetScore = jjkClass.mudraScores.authentic_mutual_love || 0;
 
     const pct = Math.round(targetScore * 100);
     this.accuracyBar.style.width = `${pct}%`;
-    this.accuracyText.textContent = `Mudra Match: ${pct}%`;
+    this.accuracyText.textContent = `Hand Sign Match: ${pct}%`;
 
-    if (pct >= 75) {
+    if (pct >= 72) {
       this.accuracyBar.style.backgroundColor = '#38bdf8';
     } else if (pct >= 40) {
       this.accuracyBar.style.backgroundColor = '#fbbf24';
@@ -224,102 +245,109 @@ export class TutorialUI {
   }
 
   // ========================================================
-  // CONTENT TEMPLATES & VIDEO CUSTOMIZERS
+  // CHARACTER CARDS & CLEAR ANATOMICAL GUIDES (100% ENGLISH)
   // ========================================================
 
   getGojoContent() {
     return `
-      <div class="tutorial-card gojo-theme">
-        <div class="card-header">
-          <div class="domain-title">
-            <span class="kanji-badge">無量空処</span>
+      <div class="tutorial-card">
+        <div class="card-hero">
+          <div class="card-hero-text">
+            <span class="character-tag cyan">Satoru Gojo • Special Grade</span>
             <h3>Domain: Infinite Void</h3>
+            <p class="seal-subtitle">Canonical Hand Sign: The Indra Seal</p>
           </div>
-          <span class="user-pill">Satoru Gojo</span>
+          <button class="ghost-toggle-btn btn-ghost-toggle active">Ghost Alignment: ON</button>
         </div>
 
-        <!-- Handcrafted SVG Mudra Illustration -->
-        <div class="mudra-illustration-box">
-          <svg class="hand-svg" viewBox="0 0 200 200" width="160" height="160">
-            <path d="M70,180 L70,120 C70,105 85,95 100,95 C115,95 130,105 130,120 L130,180 Z" fill="#1e293b" stroke="#38bdf8" stroke-width="2.5" />
-            <path d="M115,100 C125,100 135,110 132,125 C129,135 118,135 112,125" fill="#0f172a" stroke="#64748b" stroke-width="2" />
-            <path d="M125,115 C135,115 142,125 138,138 C135,148 125,148 120,138" fill="#0f172a" stroke="#64748b" stroke-width="2" />
-            <path d="M75,130 C65,115 85,110 105,115" fill="none" stroke="#fb7185" stroke-width="3" stroke-linecap="round" />
-            <path d="M92,95 L92,35 C92,26 102,26 102,35 L102,95" fill="#0f172a" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round" />
-            <path d="M106,95 L106,45 C106,30 90,30 96,25 C100,20 114,28 114,45 L114,95" fill="#0f172a" stroke="#fbbf24" stroke-width="3.5" stroke-linecap="round" />
-            <circle cx="98" cy="28" r="5" fill="#ffffff" />
-            <circle cx="98" cy="28" r="9" fill="none" stroke="#fbbf24" stroke-width="1.5" />
-          </svg>
-          <div class="mudra-caption">
-            <strong>Taishakuten (Indra Mudra)</strong>
-            <span>Cross middle finger over index finger; hold ring & pinky tight into palm.</span>
+        <!-- Handcrafted Anatomical Hand Sign Diagram -->
+        <div class="diagram-container">
+          <div class="diagram-canvas-wrap">
+            <svg class="hand-svg" viewBox="0 0 240 240" width="180" height="180">
+              <!-- Wrist & Palm Contour -->
+              <path d="M85,230 L85,150 C85,130 95,115 110,115 C130,115 145,130 145,150 L145,230" fill="#131b2e" stroke="#38bdf8" stroke-width="2.5" />
+              <!-- Curled Ring & Pinky -->
+              <path d="M135,135 C150,135 160,145 155,165 C150,180 135,180 128,168" fill="#1e293b" stroke="#0284c7" stroke-width="2" />
+              <path d="M120,135 C135,135 145,148 140,168 C135,182 122,182 115,168" fill="#1e293b" stroke="#0284c7" stroke-width="2" />
+              <!-- Thumb Tuck -->
+              <path d="M85,160 C75,140 100,135 125,145 C130,147 132,155 125,158 C105,155 85,165 85,160 Z" fill="#1e293b" stroke="#38bdf8" stroke-width="2" />
+              <!-- Extended Index Finger -->
+              <path d="M102,115 L102,40 C102,28 114,28 114,40 L114,115" fill="#131b2e" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" />
+              <!-- Middle Finger Crossing Over Index -->
+              <path d="M118,115 L118,55 C118,40 100,40 104,30 C108,22 126,30 126,55 L126,115" fill="#1e293b" stroke="#fbbf24" stroke-width="3.5" stroke-linecap="round" />
+              <!-- Callout Indicators -->
+              <circle cx="108" cy="35" r="9" fill="#fbbf24" />
+              <text x="108" y="39" font-size="11" fill="#090d16" font-weight="bold" text-anchor="middle">1</text>
+              <circle cx="92" cy="70" r="8" fill="#38bdf8" />
+              <text x="92" y="74" font-size="10" fill="#090d16" font-weight="bold" text-anchor="middle">2</text>
+              <circle cx="150" cy="155" r="8" fill="#38bdf8" />
+              <text x="150" y="159" font-size="10" fill="#090d16" font-weight="bold" text-anchor="middle">3</text>
+            </svg>
           </div>
-        </div>
-
-        <!-- 3-Step Interactive Workflow -->
-        <div class="steps-flow">
-          <div class="step-item">
-            <div class="step-num">1</div>
-            <div class="step-details">
-              <strong>Form Hand Sign</strong>
-              <span>Hold pose in camera view or inspect match meter</span>
+          <div class="callout-list">
+            <div class="callout-item">
+              <span class="callout-badge yellow">1</span>
+              <span><strong>Cross Middle over Index:</strong> Middle finger curls tightly over top of extended index finger.</span>
             </div>
-          </div>
-          <div class="step-item">
-            <div class="step-num">2</div>
-            <div class="step-details">
-              <strong>Chant & Focus</strong>
-              <span>Hold 1.2s to charge cursed energy</span>
-              <button class="step-btn btn-chant" data-domain="infinite_void">Channel Energy</button>
+            <div class="callout-item">
+              <span class="callout-badge cyan">2</span>
+              <span><strong>Keep Index Upright:</strong> Point index straight upward at chin level.</span>
             </div>
-          </div>
-          <div class="step-item">
-            <div class="step-num">3</div>
-            <div class="step-details">
-              <strong>Expand Domain</strong>
-              <span>Plays Infinite Void anime video sequence</span>
-              <button class="step-btn btn-trigger-domain" data-domain="infinite_void">Expand Domain [1]</button>
+            <div class="callout-item">
+              <span class="callout-badge cyan">3</span>
+              <span><strong>Lock Ring & Pinky:</strong> Tuck ring and pinky flat into palm, clamped firmly by thumb.</span>
             </div>
           </div>
         </div>
 
-        <!-- Video Source Customizer -->
-        <div class="video-customizer-box">
-          <div class="customizer-header">
-            <span class="customizer-title">📹 Video Clip Source</span>
-            <span class="custom-video-status">Streaming Anime Video Active</span>
+        <!-- Incantation / Chant -->
+        <div class="incantation-card">
+          <div class="incantation-label">DOMAIN INCANTATION</div>
+          <div class="incantation-quote">"Phase. Paramita. Light of Nine Ropes. Domain Expansion: Infinite Void."</div>
+        </div>
+
+        <!-- Step-by-Step Practical Guide -->
+        <div class="guide-steps">
+          <div class="guide-step">
+            <div class="step-circle">1</div>
+            <div class="step-content">
+              <strong>Raise Your Right Hand to Chin Level</strong>
+              <span>Hold palm facing your webcam approximately 40 to 50 cm away.</span>
+            </div>
           </div>
-          <p class="customizer-desc">Drop your favorite 1080p Gojo clip or paste a direct video link:</p>
-          <div class="customizer-actions">
-            <input type="file" class="video-file-input" accept="video/mp4,video/webm" style="display: none;">
-            <button class="btn-pick-video" data-target-key="infinite_void">📁 Select Local MP4</button>
-            <div class="url-input-row">
-              <input type="text" class="video-url-input" placeholder="Paste .mp4 / .webm link">
-              <button class="btn-set-url" data-target-key="infinite_void">Set</button>
+          <div class="guide-step">
+            <div class="step-circle">2</div>
+            <div class="step-content">
+              <strong>Form the Indra Crossing</strong>
+              <span>Cross middle finger over index while keeping ring & pinky locked.</span>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="step-circle">3</div>
+            <div class="step-content">
+              <strong>Channel Cursed Energy</strong>
+              <span>Hold pose for 1.2 seconds until cursed energy meter fills to 70%.</span>
+              <button class="action-btn btn-chant" data-domain="infinite_void">Channel Energy</button>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="step-circle">4</div>
+            <div class="step-content">
+              <strong>Execute Domain Expansion</strong>
+              <span>Triggers central singularity accretion disk & infinite data stream VFX.</span>
+              <button class="action-btn primary btn-trigger-domain" data-domain="infinite_void">Expand Domain [1]</button>
             </div>
           </div>
         </div>
 
-        <!-- Signature Techniques -->
-        <div class="tech-section">
-          <h4>Gojo Signature Techniques</h4>
-          <div class="tech-grid">
-            <button class="btn-technique" data-tech="infinity">
-              <span class="tech-badge">Q</span>
-              <span class="tech-name">Infinity</span>
-            </button>
-            <button class="btn-technique" data-tech="blue">
-              <span class="tech-badge">W</span>
-              <span class="tech-name">Lapse: Blue</span>
-            </button>
-            <button class="btn-technique" data-tech="red">
-              <span class="tech-badge">E</span>
-              <span class="tech-name">Reversal: Red</span>
-            </button>
-            <button class="btn-technique" data-tech="purple">
-              <span class="tech-badge">R</span>
-              <span class="tech-name">Hollow Purple</span>
-            </button>
+        <!-- Technique Quick Cast -->
+        <div class="technique-section">
+          <h4>Satoru Gojo Techniques</h4>
+          <div class="technique-grid">
+            <button class="tech-btn" data-tech="infinity"><span class="key-tag">Q</span>Limitless Shield</button>
+            <button class="tech-btn" data-tech="blue"><span class="key-tag">W</span>Lapse: Blue</button>
+            <button class="tech-btn" data-tech="red"><span class="key-tag">E</span>Reversal: Red</button>
+            <button class="tech-btn" data-tech="purple"><span class="key-tag">R</span>Hollow Purple</button>
           </div>
         </div>
       </div>
@@ -328,82 +356,87 @@ export class TutorialUI {
 
   getSukunaContent() {
     return `
-      <div class="tutorial-card sukuna-theme">
-        <div class="card-header">
-          <div class="domain-title">
-            <span class="kanji-badge red">伏魔御廚子</span>
+      <div class="tutorial-card">
+        <div class="card-hero">
+          <div class="card-hero-text">
+            <span class="character-tag red">Ryomen Sukuna • King of Curses</span>
             <h3>Domain: Malevolent Shrine</h3>
+            <p class="seal-subtitle">Canonical Hand Sign: The Enma Shrine Seal</p>
           </div>
-          <span class="user-pill red">Ryomen Sukuna</span>
+          <button class="ghost-toggle-btn btn-ghost-toggle active">Ghost Alignment: ON</button>
         </div>
 
-        <div class="mudra-illustration-box">
-          <svg class="hand-svg" viewBox="0 0 200 200" width="160" height="160">
-            <path d="M50,160 L75,100 C80,90 90,85 100,60" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
-            <path d="M150,160 L125,100 C120,90 110,85 100,60" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
-            <circle cx="100" cy="60" r="6" fill="#f87171" />
-            <path d="M70,140 C85,135 115,135 130,140" fill="none" stroke="#f97316" stroke-width="2.5" />
-            <path d="M85,105 L115,115 M85,118 L115,105" stroke="#ef4444" stroke-width="2" />
-          </svg>
-          <div class="mudra-caption">
-            <strong>Enma-ten Temple Mudra</strong>
-            <span>Clasp both hands; press index fingertips together pointing upward in a temple roof.</span>
+        <div class="diagram-container">
+          <div class="diagram-canvas-wrap">
+            <svg class="hand-svg" viewBox="0 0 240 240" width="180" height="180">
+              <!-- Left Palm Clasp -->
+              <path d="M50,190 L80,110 C85,95 95,85 110,50" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+              <!-- Right Palm Clasp -->
+              <path d="M190,190 L160,110 C155,95 145,85 130,50" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" />
+              <!-- Gable Roof Apex -->
+              <circle cx="120" cy="50" r="9" fill="#ef4444" />
+              <text x="120" y="54" font-size="11" fill="#ffffff" font-weight="bold" text-anchor="middle">1</text>
+              <!-- Interlocked Knuckles Inside -->
+              <path d="M90,120 L150,120 M95,135 L145,135 M100,150 L140,150" stroke="#b91c1c" stroke-width="2.5" stroke-linecap="round" />
+              <!-- Thumbs Tucked Inward -->
+              <path d="M80,155 C95,145 105,140 115,150" fill="none" stroke="#f97316" stroke-width="2.5" />
+              <path d="M160,155 C145,145 135,140 125,150" fill="none" stroke="#f97316" stroke-width="2.5" />
+              <!-- Pinky Base Contact -->
+              <circle cx="120" cy="180" r="8" fill="#f87171" />
+              <text x="120" y="184" font-size="10" fill="#ffffff" font-weight="bold" text-anchor="middle">2</text>
+            </svg>
           </div>
-        </div>
-
-        <div class="steps-flow">
-          <div class="step-item">
-            <div class="step-num">1</div>
-            <div class="step-details">
-              <strong>Dual-Hand Clasp</strong>
-              <span>Bring both hands into camera frame</span>
+          <div class="callout-list">
+            <div class="callout-item">
+              <span class="callout-badge red">1</span>
+              <span><strong>Roof Gable Apex:</strong> Press index fingertips together pointing straight up to form the sharp roof ridge.</span>
             </div>
-          </div>
-          <div class="step-item">
-            <div class="step-num">2</div>
-            <div class="step-details">
-              <strong>Form Gable Roof</strong>
-              <span>Index tips touching pointing upward</span>
-              <button class="step-btn btn-chant" data-domain="malevolent_shrine">Channel Energy</button>
+            <div class="callout-item">
+              <span class="callout-badge red">2</span>
+              <span><strong>Tuck Thumbs & Pinkies:</strong> Tuck thumbs inward against palms; touch pinky finger bases together.</span>
             </div>
-          </div>
-          <div class="step-item">
-            <div class="step-num">3</div>
-            <div class="step-details">
-              <strong>Malevolent Shrine</strong>
-              <span>Plays Malevolent Shrine anime video sequence</span>
-              <button class="step-btn btn-trigger-domain" data-domain="malevolent_shrine">Expand Domain [2]</button>
+            <div class="callout-item">
+              <span class="callout-badge red">3</span>
+              <span><strong>Interlock Inner Knuckles:</strong> Keep middle and ring fingers clasped together inside.</span>
             </div>
           </div>
         </div>
 
-        <div class="video-customizer-box">
-          <div class="customizer-header">
-            <span class="customizer-title">📹 Video Clip Source</span>
-            <span class="custom-video-status">Streaming Anime Video Active</span>
+        <div class="incantation-card">
+          <div class="incantation-label">DOMAIN INCANTATION</div>
+          <div class="incantation-quote">"Scale of the Dragon. Recoil. Twin Meteors. Domain Expansion: Malevolent Shrine."</div>
+        </div>
+
+        <div class="guide-steps">
+          <div class="guide-step">
+            <div class="step-circle">1</div>
+            <div class="step-content">
+              <strong>Bring Both Hands to Center Chest</strong>
+              <span>Palms facing each other in dual prayer position.</span>
+            </div>
           </div>
-          <p class="customizer-desc">Select your Sukuna Malevolent Shrine video:</p>
-          <div class="customizer-actions">
-            <input type="file" class="video-file-input" accept="video/mp4,video/webm" style="display: none;">
-            <button class="btn-pick-video" data-target-key="malevolent_shrine">📁 Select Local MP4</button>
-            <div class="url-input-row">
-              <input type="text" class="video-url-input" placeholder="Paste .mp4 / .webm link">
-              <button class="btn-set-url" data-target-key="malevolent_shrine">Set</button>
+          <div class="guide-step">
+            <div class="step-circle">2</div>
+            <div class="step-content">
+              <strong>Form the Shrine Gable</strong>
+              <span>Touch index tips together pointing straight up.</span>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="step-circle">3</div>
+            <div class="step-content">
+              <strong>Expand Malevolent Shrine</strong>
+              <span>Triggers Blood Sky, Skull Shrine & Continuous Dismantle cutting barrage.</span>
+              <button class="action-btn primary btn-trigger-domain" data-domain="malevolent_shrine">Expand Domain [2]</button>
             </div>
           </div>
         </div>
 
-        <div class="tech-section">
-          <h4>Sukuna Signature Techniques</h4>
-          <div class="tech-grid">
-            <button class="btn-technique" data-tech="dismantle">
-              <span class="tech-badge">A</span>
-              <span class="tech-name">Dismantle / Cleave</span>
-            </button>
-            <button class="btn-technique" data-tech="fire_arrow">
-              <span class="tech-badge">S</span>
-              <span class="tech-name">Furnace: Fire Arrow</span>
-            </button>
+        <div class="technique-section">
+          <h4>Ryomen Sukuna Techniques</h4>
+          <div class="technique-grid">
+            <button class="tech-btn" data-tech="dismantle"><span class="key-tag">A</span>Dismantle / Cleave</button>
+            <button class="tech-btn" data-tech="fire_arrow"><span class="key-tag">S</span>Furnace: Fire Arrow</button>
           </div>
         </div>
       </div>
@@ -412,63 +445,112 @@ export class TutorialUI {
 
   getMegumiContent() {
     return `
-      <div class="tutorial-card megumi-theme">
-        <div class="card-header">
-          <div class="domain-title">
-            <span class="kanji-badge green">嵌合暗翳庭</span>
+      <div class="tutorial-card">
+        <div class="card-hero">
+          <div class="card-hero-text">
+            <span class="character-tag green">Megumi Fushiguro • Ten Shadows</span>
             <h3>Domain: Chimera Shadow Garden</h3>
+            <p class="seal-subtitle">Canonical Hand Sign: The Shadow Puppet Seal</p>
           </div>
-          <span class="user-pill green">Megumi Fushiguro</span>
+          <button class="ghost-toggle-btn btn-ghost-toggle active">Ghost Alignment: ON</button>
         </div>
 
-        <div class="mudra-illustration-box">
-          <svg class="hand-svg" viewBox="0 0 200 200" width="160" height="160">
-            <ellipse cx="100" cy="110" rx="14" ry="8" fill="#10b981" />
-            <path d="M90,110 L45,70 M90,115 L40,90 M90,120 L45,115" stroke="#34d399" stroke-width="3" stroke-linecap="round" />
-            <path d="M110,110 L155,70 M110,115 L160,90 M110,120 L155,115" stroke="#34d399" stroke-width="3" stroke-linecap="round" />
-          </svg>
-          <div class="mudra-caption">
-            <strong>Shadow Puppet Mudra</strong>
-            <span>Hook thumbs together with fingers splayed outward like wings.</span>
+        <div class="diagram-container">
+          <div class="diagram-canvas-wrap">
+            <svg class="hand-svg" viewBox="0 0 240 240" width="180" height="180">
+              <!-- Interlocked Thumbs -->
+              <ellipse cx="120" cy="130" rx="18" ry="12" fill="#10b981" stroke="#34d399" stroke-width="2" />
+              <circle cx="120" cy="130" r="8" fill="#ffffff" />
+              <text x="120" y="134" font-size="10" fill="#064e3b" font-weight="bold" text-anchor="middle">1</text>
+              <!-- Left Wing Spread -->
+              <path d="M110,130 L45,80 M108,135 L38,105 M105,140 L42,130 M102,145 L50,155" stroke="#34d399" stroke-width="3" stroke-linecap="round" />
+              <!-- Right Wing Spread -->
+              <path d="M130,130 L195,80 M132,135 L202,105 M135,140 L198,130 M138,145 L190,155" stroke="#34d399" stroke-width="3" stroke-linecap="round" />
+              <circle cx="195" cy="80" r="8" fill="#34d399" />
+              <text x="195" y="84" font-size="10" fill="#064e3b" font-weight="bold" text-anchor="middle">2</text>
+            </svg>
           </div>
-        </div>
-
-        <div class="steps-flow">
-          <div class="step-item">
-            <div class="step-num">1</div>
-            <div class="step-details">
-              <strong>Hook Thumbs</strong>
-              <span>Interlock thumbs facing camera</span>
+          <div class="callout-list">
+            <div class="callout-item">
+              <span class="callout-badge green">1</span>
+              <span><strong>Interlock Both Thumbs:</strong> Hook thumb knuckles firmly together facing your chest.</span>
             </div>
-          </div>
-          <div class="step-item">
-            <div class="step-num">2</div>
-            <div class="step-details">
-              <strong>Spread Shadow Wings</strong>
-              <button class="step-btn btn-chant" data-domain="chimera_shadow_garden">Channel Energy</button>
-            </div>
-          </div>
-          <div class="step-item">
-            <div class="step-num">3</div>
-            <div class="step-details">
-              <strong>Chimera Shadow Garden</strong>
-              <span>Plays Chimera Shadow Garden anime video</span>
-              <button class="step-btn btn-trigger-domain" data-domain="chimera_shadow_garden">Expand Domain [3]</button>
+            <div class="callout-item">
+              <span class="callout-badge green">2</span>
+              <span><strong>Spread 8 Wing Fingers:</strong> Splay all remaining 8 fingers wide outward like Nue's wings.</span>
             </div>
           </div>
         </div>
 
-        <div class="video-customizer-box">
-          <div class="customizer-header">
-            <span class="customizer-title">📹 Video Clip Source</span>
-            <span class="custom-video-status">Streaming Anime Video Active</span>
+        <div class="incantation-card">
+          <div class="incantation-label">DOMAIN INCANTATION</div>
+          <div class="incantation-quote">"Even if it is incomplete, even if it is ugly... burst forth! Domain Expansion: Chimera Shadow Garden!"</div>
+        </div>
+
+        <div class="guide-steps">
+          <div class="guide-step">
+            <div class="step-circle">1</div>
+            <div class="step-content">
+              <strong>Hook Thumbs & Fan Fingers Outward</strong>
+              <span>Position hands ~40cm away from camera.</span>
+            </div>
           </div>
-          <div class="customizer-actions">
-            <input type="file" class="video-file-input" accept="video/mp4,video/webm" style="display: none;">
-            <button class="btn-pick-video" data-target-key="chimera_shadow_garden">📁 Select Local MP4</button>
-            <div class="url-input-row">
-              <input type="text" class="video-url-input" placeholder="Paste .mp4 / .webm link">
-              <button class="btn-set-url" data-target-key="chimera_shadow_garden">Set</button>
+          <div class="guide-step">
+            <div class="step-circle">2</div>
+            <div class="step-content">
+              <strong>Expand Shadow Garden</strong>
+              <span>Triggers rising liquid shadow pool, soaring Nue & glowing eyes.</span>
+              <button class="action-btn primary btn-trigger-domain" data-domain="chimera_shadow_garden">Expand Domain [3]</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  getMahitoContent() {
+    return `
+      <div class="tutorial-card">
+        <div class="card-hero">
+          <div class="card-hero-text">
+            <span class="character-tag pink">Mahito • Cursed Spirit</span>
+            <h3>Domain: Self-Embodiment of Perfection</h3>
+            <p class="seal-subtitle">Canonical Hand Sign: The Soul Lotus Clasp</p>
+          </div>
+          <button class="ghost-toggle-btn btn-ghost-toggle active">Ghost Alignment: ON</button>
+        </div>
+
+        <div class="diagram-container">
+          <div class="diagram-canvas-wrap">
+            <svg class="hand-svg" viewBox="0 0 240 240" width="180" height="180">
+              <!-- Cupped Woven Cage -->
+              <path d="M60,160 C50,110 70,80 100,75 C115,75 120,95 110,120" fill="none" stroke="#ec4899" stroke-width="3" stroke-linecap="round" />
+              <path d="M180,160 C190,110 170,80 140,75 C125,75 120,95 130,120" fill="none" stroke="#ec4899" stroke-width="3" stroke-linecap="round" />
+              <circle cx="120" cy="100" r="12" fill="#ec4899" />
+              <text x="120" y="104" font-size="10" fill="#ffffff" font-weight="bold" text-anchor="middle">1</text>
+              <path d="M90,140 C105,130 135,130 150,140" stroke="#f472b6" stroke-width="2.5" />
+            </svg>
+          </div>
+          <div class="callout-list">
+            <div class="callout-item">
+              <span class="callout-badge pink">1</span>
+              <span><strong>Weave Hollow Lotus Cage:</strong> Cup palms inward towards throat, interlacing fingers inside a hollow sphere.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="incantation-card">
+          <div class="incantation-label">DOMAIN INCANTATION</div>
+          <div class="incantation-quote">"This is the true shape of my soul... Domain Expansion: Self-Embodiment of Perfection."</div>
+        </div>
+
+        <div class="guide-steps">
+          <div class="guide-step">
+            <div class="step-circle">1</div>
+            <div class="step-content">
+              <strong>Form Cupped Lotus Hands</strong>
+              <span>Triggers woven giant hands enclosing the screen & heartbeat pulse.</span>
+              <button class="action-btn primary btn-trigger-domain" data-domain="self_embodiment_of_perfection">Expand Domain [4]</button>
             </div>
           </div>
         </div>
@@ -478,56 +560,94 @@ export class TutorialUI {
 
   getTodoContent() {
     return `
-      <div class="tutorial-card todo-theme">
-        <div class="card-header">
-          <div class="domain-title">
-            <span class="kanji-badge amber">不義遊戯</span>
-            <h3>Ability: Boogie Woogie</h3>
-          </div>
-          <span class="user-pill amber">Aoi Todo</span>
-        </div>
-
-        <div class="mudra-illustration-box">
-          <svg class="hand-svg" viewBox="0 0 200 200" width="160" height="160">
-            <path d="M50,100 L85,100 C92,90 92,110 85,100" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" />
-            <path d="M150,100 L115,100 C108,90 108,110 115,100" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" />
-            <circle cx="100" cy="100" r="16" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="4,4" />
-            <circle cx="100" cy="100" r="30" fill="none" stroke="#f59e0b" stroke-width="1.5" />
-          </svg>
-          <div class="mudra-caption">
-            <strong>The 530,000 IQ Clap</strong>
-            <span>Clap two hands together rapidly in view to trigger the space swap video and sound.</span>
+      <div class="tutorial-card">
+        <div class="card-hero">
+          <div class="card-hero-text">
+            <span class="character-tag amber">Aoi Todo • Grade 1 Sorcerer</span>
+            <h3>Innate Technique: Boogie Woogie</h3>
+            <p class="seal-subtitle">Physical Trigger: The Percussive Hand Clap</p>
           </div>
         </div>
 
-        <div class="steps-flow">
-          <div class="step-item">
-            <div class="step-num">1</div>
-            <div class="step-details">
-              <strong>Clap Hands in View</strong>
-              <span>Or press D / button below</span>
-            </div>
+        <div class="diagram-container">
+          <div class="diagram-canvas-wrap">
+            <svg class="hand-svg" viewBox="0 0 240 240" width="180" height="180">
+              <path d="M40,120 L95,120 C105,105 105,135 95,120" stroke="#f59e0b" stroke-width="4.5" stroke-linecap="round" />
+              <path d="M200,120 L145,120 C135,105 135,135 145,120" stroke="#f59e0b" stroke-width="4.5" stroke-linecap="round" />
+              <circle cx="120" cy="120" r="16" fill="#fbbf24" />
+              <text x="120" y="125" font-size="12" fill="#78350f" font-weight="bold" text-anchor="middle">⚡</text>
+              <circle cx="120" cy="120" r="32" fill="none" stroke="#fbbf24" stroke-width="2" stroke-dasharray="6,4" />
+            </svg>
           </div>
-          <div class="step-item">
-            <div class="step-num">2</div>
-            <div class="step-details">
-              <strong>Execute Boogie Woogie</strong>
-              <button class="step-btn btn-technique" data-tech="boogie_woogie">Execute Clap [D]</button>
+          <div class="callout-list">
+            <div class="callout-item">
+              <span class="callout-badge yellow">⚡</span>
+              <span><strong>Resonant Hand Clap:</strong> Strike both open palms together firmly in view of the webcam.</span>
             </div>
           </div>
         </div>
 
-        <div class="video-customizer-box">
-          <div class="customizer-header">
-            <span class="customizer-title">📹 Video Clip Source</span>
-            <span class="custom-video-status">Streaming Anime Video Active</span>
+        <div class="guide-steps">
+          <div class="guide-step">
+            <div class="step-circle">1</div>
+            <div class="step-content">
+              <strong>Clap Hands Rapidly in Front of Camera</strong>
+              <span>Or press [D] hotkey to trigger space swap, monochrome flash, and speed lines.</span>
+              <button class="action-btn primary btn-technique" data-tech="boogie_woogie">Execute Boogie Woogie [D]</button>
+            </div>
           </div>
-          <div class="customizer-actions">
-            <input type="file" class="video-file-input" accept="video/mp4,video/webm" style="display: none;">
-            <button class="btn-pick-video" data-target-key="boogie_woogie">📁 Select Local MP4</button>
-            <div class="url-input-row">
-              <input type="text" class="video-url-input" placeholder="Paste .mp4 / .webm link">
-              <button class="btn-set-url" data-target-key="boogie_woogie">Set</button>
+        </div>
+      </div>
+    `;
+  }
+
+  getHakariContent() {
+    return `
+      <div class="tutorial-card">
+        <div class="card-hero">
+          <div class="card-hero-text">
+            <span class="character-tag yellow">Kinji Hakari • Third Year</span>
+            <h3>Domain: Idle Death Gamble</h3>
+            <p class="seal-subtitle">Canonical Hand Sign: Gambler's Prayer Clasp</p>
+          </div>
+        </div>
+        <div class="incantation-card">
+          <div class="incantation-label">DOMAIN INCANTATION</div>
+          <div class="incantation-quote">"Time to roll the jackpot! Domain Expansion: Idle Death Gamble!"</div>
+        </div>
+        <div class="guide-steps">
+          <div class="guide-step">
+            <div class="step-circle">1</div>
+            <div class="step-content">
+              <strong>Form Tight Prayer Clasp with Thumbs Tucked</strong>
+              <button class="action-btn primary btn-trigger-domain" data-domain="idle_death_gamble">Expand Domain [5]</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  getYutaContent() {
+    return `
+      <div class="tutorial-card">
+        <div class="card-hero">
+          <div class="card-hero-text">
+            <span class="character-tag purple">Yuta Okkotsu • Special Grade</span>
+            <h3>Domain: Authentic Mutual Love</h3>
+            <p class="seal-subtitle">Canonical Hand Sign: Rika Ring Binding Seal</p>
+          </div>
+        </div>
+        <div class="incantation-card">
+          <div class="incantation-label">DOMAIN INCANTATION</div>
+          <div class="incantation-quote">"Rika-chan, help me out. Domain Expansion: Authentic Mutual Love."</div>
+        </div>
+        <div class="guide-steps">
+          <div class="guide-step">
+            <div class="step-circle">1</div>
+            <div class="step-content">
+              <strong>Interlace Fingers Touching Ring Finger</strong>
+              <button class="action-btn primary btn-trigger-domain" data-domain="authentic_mutual_love">Expand Domain [6]</button>
             </div>
           </div>
         </div>

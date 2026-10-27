@@ -1,18 +1,24 @@
 /**
- * NOVA — Jujutsu Kaisen Domain Expansion Engine (Video Driven)
+ * Jujutsu Kaisen Domain Expansion Engine
  *
  * Coordinates canonical Domain Expansion lifecycles:
- * - Gojo's Infinite Void (無量空処)
- * - Sukuna's Malevolent Shrine (伏魔御廚子)
- * - Megumi's Chimera Shadow Garden (嵌合暗翳庭)
- * - Mahito's Self-Embodiment of Perfection (自閉円頓裹)
+ * - Gojo's Infinite Void
+ * - Sukuna's Malevolent Shrine
+ * - Megumi's Chimera Shadow Garden
+ * - Mahito's Self-Embodiment of Perfection
+ * - Hakari's Idle Death Gamble
+ * - Yuta's Authentic Mutual Love
  *
- * Synchronizes video playback, dimensional glass fractures,
- * screen rumble, and audio cues.
+ * Synchronizes character-specific anime visual engines, screen rumble,
+ * dimensional shatter, and procedural audio cues.
  */
 
 import { CONFIG } from './config.js';
 import { soundEngine } from './audio-synthesizer.js';
+import { InfiniteVoidFX } from './vfx/infinite-void-fx.js';
+import { MalevolentShrineFX } from './vfx/malevolent-shrine-fx.js';
+import { ChimeraShadowFX } from './vfx/chimera-shadow-fx.js';
+import { SelfEmbodimentFX } from './vfx/self-embodiment-fx.js';
 
 export class DomainEngine {
   /**
@@ -27,6 +33,17 @@ export class DomainEngine {
     this.phase = 'IDLE'; // 'IDLE' | 'CHANT' | 'SHATTER' | 'ACTIVE' | 'COLLAPSE'
     this.phaseTimer = 0;
     this.screenShake = 0;
+
+    // Character-Specific Anime Visual Effect Engines
+    this.vfx = {
+      infinite_void: new InfiniteVoidFX(),
+      malevolent_shrine: new MalevolentShrineFX(),
+      chimera_shadow_garden: new ChimeraShadowFX(),
+      self_embodiment_of_perfection: new SelfEmbodimentFX(),
+      self_embodiment: new SelfEmbodimentFX(),
+      idle_death_gamble: new InfiniteVoidFX(), // Gambler variant
+      authentic_mutual_love: new SelfEmbodimentFX(), // Love thread variant
+    };
 
     // Dimensional glass fracture shard coordinates
     this.shatterLines = [];
@@ -71,33 +88,49 @@ export class DomainEngine {
   }
 
   /**
-   * Activates a Domain Expansion with full dimensional shatter and video transition.
+   * Activates a Domain Expansion with anime visual effects, screen rumble, and dimensional shatter.
    * @param {string} domainId
    */
   activateDomain(domainId) {
     const domain = Object.values(CONFIG.DOMAINS).find((d) => d.id === domainId);
     if (!domain) return;
 
+    // Deactivate any currently active domain VFX
+    this.deactivateAllVFX();
+
     this.activeDomain = domain;
     this.phase = 'SHATTER';
     this.phaseTimer = 0;
-    this.screenShake = 22; // High-impact screen rumble
+    this.screenShake = 24; // High-impact screen rumble
     this.shatterAlpha = 1.0;
 
-    // Generate random cracked glass fracture lines radiating from center
+    // Activate the specific anime visual engine
+    if (this.vfx[domain.id]) {
+      this.vfx[domain.id].activate();
+    }
+
+    // Generate cracked glass fracture lines radiating from center
     this.generateShatterLines();
 
     // Trigger dimensional fracture audio
     soundEngine.playDomainShatter();
     soundEngine.setCursedHum(0);
 
-    // Transition background to the specific domain anime video!
+    // Optional: Play local video file if present
     if (this.videoEngine) {
       this.videoEngine.playDomainVideo(domain.id);
     }
 
     if (this.onDomainChange) {
       this.onDomainChange(domain);
+    }
+  }
+
+  deactivateAllVFX() {
+    for (const fx of Object.values(this.vfx)) {
+      if (fx && fx.deactivate) {
+        fx.deactivate();
+      }
     }
   }
 
@@ -111,10 +144,10 @@ export class DomainEngine {
     const cx = w / 2;
     const cy = h / 2;
 
-    const radialCount = 14;
+    const radialCount = 16;
     for (let i = 0; i < radialCount; i++) {
       const angle = (i / radialCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
-      const length = Math.max(w, h) * 0.8;
+      const length = Math.max(w, h) * 0.85;
       const ex = cx + Math.cos(angle) * length;
       const ey = cy + Math.sin(angle) * length;
 
@@ -132,17 +165,17 @@ export class DomainEngine {
   }
 
   /**
-   * Dismisses the active Domain Expansion and restores idle background atmosphere.
+   * Dismisses the active Domain Expansion and restores idle cursed atmosphere.
    */
   dismissDomain() {
     if (!this.activeDomain) return;
 
+    this.deactivateAllVFX();
     this.activeDomain = null;
     this.phase = 'IDLE';
     this.cursedEnergy = 0;
-    this.screenShake = 10;
+    this.screenShake = 12;
 
-    // Return video to idle staging background
     if (this.videoEngine) {
       this.videoEngine.playIdleVideo();
     }
@@ -153,7 +186,7 @@ export class DomainEngine {
   }
 
   /**
-   * Updates domain state machine and animations per frame.
+   * Updates domain state machine and active anime VFX engines per frame.
    * @param {number} dt Normalized time (~1.0 at 60 FPS)
    */
   update(dt) {
@@ -175,6 +208,23 @@ export class DomainEngine {
         this.dismissDomain();
       }
     }
+
+    // Update active anime VFX engine
+    if (this.activeDomain && this.vfx[this.activeDomain.id]) {
+      this.vfx[this.activeDomain.id].update(dt);
+    }
+  }
+
+  /**
+   * Draws the active domain's anime visual effect onto the canvas.
+   * @param {CanvasRenderingContext2D} ctx
+   * @param {number} width
+   * @param {number} height
+   */
+  drawDomain(ctx, width, height) {
+    if (this.activeDomain && this.vfx[this.activeDomain.id]) {
+      this.vfx[this.activeDomain.id].draw(ctx, width, height);
+    }
   }
 
   /**
@@ -187,8 +237,8 @@ export class DomainEngine {
     ctx.save();
     ctx.strokeStyle = `rgba(255, 255, 255, ${this.shatterAlpha})`;
     ctx.lineWidth = 2.5;
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = 'rgba(56, 189, 248, 0.8)';
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = 'rgba(56, 189, 248, 0.85)';
 
     for (const nodes of this.shatterLines) {
       ctx.beginPath();
